@@ -38,7 +38,7 @@ def cached(key_name=None):
                 key = kwargs.get(key_name, key)
 
             if key not in method_cache:
-                method_cache[key] = method(self, *args, **kwargs)        
+                method_cache[key] = method(self, *args, **kwargs)
 
             return method_cache.get(key, None)
 
@@ -85,7 +85,7 @@ class Seinfeld(object):
         self._db = None
 
     def cursor(self):
-        '''Returns a db cursor. If the connection is closed, this will open it.'''
+        '''Returns a cursor. If the connection is closed, this will open it.'''
         if not self._open:
             self.open()
 
@@ -140,4 +140,3 @@ class Seinfeld(object):
         '''Return an episode given the season number and episode number.'''
 
         return self.season(season).episodes[number]
-
