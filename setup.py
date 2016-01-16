@@ -4,7 +4,7 @@ import seinfeld
 
 setup(name='seinfeld',
       description='Query a Seinfeld quote database',
-      version=seinfeld.__version__
+      version=seinfeld.__version__,
       author='John Reese',
       author_email='john@noswap.com',
       url='https://github.com/jreese/libseinfeld',
