@@ -61,7 +61,7 @@ class Seinfeld(object):
         self.open()
         return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
     def __repr__(self):
