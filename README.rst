@@ -5,6 +5,9 @@ Python library for querying Seinfeld quotes.
 
 Depends on a database generated using `scripts by Colin Pollick`_.
 
+.. image:: https://travis-ci.org/jreese/libseinfeld.svg?branch=master
+    :target: https://travis-ci.org/jreese/libseinfeld
+
 
 Install
 -------
