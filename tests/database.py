@@ -52,24 +52,27 @@ class TestDatabase(unittest.TestCase):
         self.assertEqual(episode.director, 'Tom Cherones')
 
     def test_quote(self):
+        speaker = self.seinfeld.speaker('GEORGE')
         episode = self.seinfeld.season(4).episodes[3]
         quote = self.seinfeld.quote(34663)
+
         self.assertEqual(quote.id, 34663)
-        self.assertEqual(quote.episode, episode.id)
+        self.assertEqual(quote.episode, episode)
         self.assertEqual(quote.number, 250)
-        self.assertEqual(quote.speaker, 'GEORGE')
+        self.assertEqual(quote.speaker, speaker)
         self.assertEqual(quote.text, '(Smiling) Nothing.')
 
     def test_search_single_quote(self):
-        quotes = self.seinfeld.search(speaker='CUSTOMER',
-                                      subject='Alton Benes')
+        speaker = self.seinfeld.speaker('CUSTOMER')
+        episode = self.seinfeld.season(2).episodes[3]
+        quotes = self.seinfeld.search(speaker=speaker, subject='Alton Benes')
         self.assertEquals(len(quotes), 1)
 
         quote = quotes[0]
         self.assertEqual(quote.id, 1442)
-        self.assertEqual(quote.episode, 7)
+        self.assertEqual(quote.episode, episode)
         self.assertEqual(quote.number, 6)
-        self.assertEqual(quote.speaker, 'CUSTOMER')
+        self.assertEqual(quote.speaker, speaker)
         self.assertEqual(quote.text, 'Alton Benes is your father?')
 
     def test_search_multi_quote(self):
@@ -92,14 +95,15 @@ class TestDatabase(unittest.TestCase):
 
         last_number = 0
         for quote in quotes:
-            self.assertEqual(quote.episode, episode.id)
+            self.assertEqual(quote.episode, episode)
             self.assertGreater(quote.number, last_number)
-            self.assertEqual(quote.speaker, speaker.id)
+            self.assertEqual(quote.speaker, speaker)
             self.assertTrue(quote.text)
 
             last_number = quote.number
 
     def test_passage(self):
+        speaker = self.seinfeld.speaker('GEORGE')
         episode = self.seinfeld.season(4).episodes[3]
         quote = self.seinfeld.quote(34663)
 
@@ -113,20 +117,20 @@ class TestDatabase(unittest.TestCase):
 
         self.assertTrue(passage)
         self.assertEqual(passage.id, 34663)
-        self.assertEqual(passage.episode, episode.id)
+        self.assertEqual(passage.episode, episode)
 
         # passage beginning
         quote = passage.quotes[0]
         self.assertEqual(quote.id, 34661)
-        self.assertEqual(quote.episode, episode.id)
+        self.assertEqual(quote.episode, episode)
         self.assertEqual(quote.number, 248)
-        self.assertEqual(quote.speaker, 'GEORGE')
+        self.assertEqual(quote.speaker, speaker)
         self.assertTrue(quote.text.startswith('I think I can sum up the show'))
 
         # passage ending
         quote = passage.quotes[-1]
         self.assertEqual(quote.id, 34665)
-        self.assertEqual(quote.episode, episode.id)
+        self.assertEqual(quote.episode, episode)
         self.assertEqual(quote.number, 252)
-        self.assertEqual(quote.speaker, 'GEORGE')
+        self.assertEqual(quote.speaker, speaker)
         self.assertEqual(quote.text, 'The show is about nothing.')

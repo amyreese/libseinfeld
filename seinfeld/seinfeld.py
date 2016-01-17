@@ -159,14 +159,31 @@ class Seinfeld(object):
 
         episodes = {}
         for row in c.fetchall():
-            row = list(row)
-            row[4] = parse(row[4]).date()
-            row[5] = {w.strip() for w in row[5].split(',')}
-            episode = Episode(*row)
+            episode = self._episode(row)
 
             episodes[episode.id] = episode
 
         return episodes
+
+    def _episode(self, row):
+        '''Build episode from db row, substituting date object, splitting
+        writers, etc.'''
+
+        row = list(row)
+        row[4] = parse(row[4]).date()
+        row[5] = {w.strip() for w in row[5].split(',')}
+
+        return Episode(*row)
+
+    def _quote(self, row):
+        '''Build quote from db row, substituting episode and speaker objects
+        in place of IDs.'''
+
+        row = list(row)
+        row[1] = self.episode(row[1])
+        row[3] = self.speaker(row[3])
+
+        return Quote(*row)
 
     def quote(self, id):
         '''Return a single quote with the given ID.'''
@@ -181,7 +198,7 @@ class Seinfeld(object):
                 where id = ?
                 '''
         c.execute(query, (id,))
-        return Quote(*c.fetchone())
+        return self._quote(c.fetchone())
 
     def passage(self, quote, length=5):
         '''Given a quote object, return a passage of the given length
@@ -204,9 +221,9 @@ class Seinfeld(object):
         start = middle - half if middle > half else 1
         end = start + length - 1
 
-        c.execute(query, (quote.episode, start, end))
+        c.execute(query, (quote.episode.id, start, end))
 
-        quotes = [Quote(*row) for row in c.fetchall()]
+        quotes = [self._quote(row) for row in c.fetchall()]
         return Passage(quote.id, quote.episode, quotes)
 
     def search(self, episode=None, speaker=None, subject=None,
@@ -259,7 +276,7 @@ class Seinfeld(object):
         query = query.format(' and '.join(wheres), order, limit)
         c.execute(query, params)
 
-        return [Quote(*row) for row in c.fetchall()]
+        return [self._quote(row) for row in c.fetchall()]
 
     def random(self, speaker=None, subject=None):
         '''Returns a single quote matching the given search criteria.
