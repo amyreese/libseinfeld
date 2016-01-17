@@ -74,6 +74,17 @@ class Seinfeld(object):
         self._open = True
         self._db = sqlite3.connect(self.db_path)
 
+        self._db.execute('''
+                         CREATE TEMPORARY VIEW IF NOT EXISTS quote AS
+                         SELECT u.id, u.episode_id, u.utterance_number,
+                            u.speaker, group_concat(s.text, " ") text
+                         FROM utterance u
+                         JOIN sentence s ON u.id = s.utterance_id
+                         GROUP BY u.id
+                         ORDER BY u.episode_id asc, u.utterance_number asc,
+                            s.sentence_number asc
+                         ''')
+
     def close(self):
         if not self._open:
             return
