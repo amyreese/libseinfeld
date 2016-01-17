@@ -21,5 +21,5 @@ setup(name='seinfeld',
                    ],
       license='MIT License',
       packages=['seinfeld'],
-      install_requires=['dateutil'],
+      install_requires=['python-dateutil'],
       )
