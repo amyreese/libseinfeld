@@ -9,4 +9,4 @@ from __future__ import unicode_literals
 
 from .seinfeld import Seinfeld
 
-__version__ = '0.1.0'
+__version__ = '1.0.0'
