@@ -1,13 +1,16 @@
 seinfeld.db:
 	wget https://noswap.com/pub/seinfeld.db
 
+README:
+	cp README.rst
+
 build:
 	python setup.py build
 
 dev:
 	python setup.py develop
 
-upload:
+upload: README
 	python setup.py sdist upload
 
 lint:

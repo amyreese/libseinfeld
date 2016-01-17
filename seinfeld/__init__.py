@@ -7,6 +7,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from .seinfeld import Seinfeld
+try:
+    from .seinfeld import Seinfeld
 
-__version__ = '1.0.0'
+except ImportError:
+    pass
+
+__version__ = '1.0.1'
