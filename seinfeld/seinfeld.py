@@ -9,12 +9,9 @@ from __future__ import unicode_literals
 import sqlite3
 
 from collections import namedtuple
+from dateutil.parser import parse
 from functools import wraps
 
-
-Season = namedtuple('Season', ('id', 'episodes'))
-Episode = namedtuple('Episode', ('id', 'season', 'number', 'title',
-                                 'date', 'writer', 'director'))
 
 Speaker = namedtuple('Speaker', ('id', 'name'))
 
@@ -23,6 +20,10 @@ Quote = namedtuple('Quote', ('id', 'episode', 'number', 'speaker', 'text'))
 
 # One or more quotes, in order, from a single episode
 Passage = namedtuple('Passage', ('id', 'episode', 'quotes'))
+
+Season = namedtuple('Season', ('number', 'episodes'))
+Episode = namedtuple('Episode', ('id', 'season', 'number', 'title',
+                                 'date', 'writers', 'director'))
 
 
 def cached(key_name=None):
@@ -102,21 +103,24 @@ class Seinfeld(object):
 
         return self._db.cursor()
 
-    @cached()
-    def speakers(self):
-        '''Return an alphabetic list of all known speakers.'''
+    @cached('name')
+    def speaker(self, name=None):
+        '''Return a speaker with the given name.  If `name` is `None`, returns
+        a dictionary of all known speakers.'''
+
+        if name:
+            return self.speaker().get(name.upper(), None)
 
         c = self.cursor()
         c.execute('''
                   select distinct speaker
                   from utterance
-                  order by speaker asc
                   ''')
 
-        speakers = []
+        speakers = {}
         for name, in c.fetchall():
             speaker = Speaker(name, name.capitalize())
-            speakers.append(speaker)
+            speakers[speaker.id] = speaker
 
         return speakers
 
@@ -128,6 +132,23 @@ class Seinfeld(object):
         if number:
             return self.season().get(number, None)
 
+        seasons = {}
+        for episode in self.episode().values():
+            if episode.season not in seasons:
+                seasons[episode.season] = Season(episode.season, {})
+
+            seasons[episode.season].episodes[episode.number] = episode
+
+        return seasons
+
+    @cached('id')
+    def episode(self, id=None):
+        '''Return a season, and the associated episodes.  If `number` is
+        `None`, returns all seasons.'''
+
+        if id:
+            return self.episode().get(id, None)
+
         c = self.cursor()
         c.execute('''
                   select id, season_number, episode_number,
@@ -136,18 +157,118 @@ class Seinfeld(object):
                   order by season_number asc, episode_number asc
                   ''')
 
-        seasons = {}
+        episodes = {}
         for row in c.fetchall():
+            row = list(row)
+            row[4] = parse(row[4]).date()
+            row[5] = {w.strip() for w in row[5].split(',')}
             episode = Episode(*row)
 
-            if episode.season not in seasons:
-                seasons[episode.season] = Season(episode.season, {})
+            episodes[episode.id] = episode
 
-            seasons[episode.season].episodes[episode.number] = episode
+        return episodes
 
-        return seasons
+    def quote(self, id):
+        '''Return a single quote with the given ID.'''
 
-    def episode(self, season, number):
-        '''Return an episode given the season number and episode number.'''
+        if id < 1 or id > self.MAX_QUOTE_ID:
+            raise ValueError('Quote ID out of range')
 
-        return self.season(season).episodes[number]
+        c = self.cursor()
+        query = '''
+                select id, episode_id, utterance_number, speaker, text
+                from quote
+                where id = ?
+                '''
+        c.execute(query, (id,))
+        return Quote(*c.fetchone())
+
+    def passage(self, quote, length=5):
+        '''Given a quote object, return a passage of the given length
+        surrounding the quote.'''
+
+        if not isinstance(quote, Quote):
+            quote = self.quote(quote)
+
+        c = self.cursor()
+        query = '''
+                select id, episode_id, utterance_number, speaker, text
+                from quote
+                where episode_id = ? and
+                    utterance_number >= ? and utterance_number <= ?
+                order by utterance_number
+                '''
+
+        half = length // 2
+        middle = quote.number
+        start = middle - half if middle > half else 1
+        end = start + length - 1
+
+        c.execute(query, (quote.episode, start, end))
+
+        quotes = [Quote(*row) for row in c.fetchall()]
+        return Passage(quote.id, quote.episode, quotes)
+
+    def search(self, episode=None, speaker=None, subject=None,
+               limit=10, reverse=False, random=False):
+        '''Return a list of quotes, in order, given the search criteria.'''
+
+        if not any((episode, speaker, subject)):
+            raise ValueError('Must specify episode, speaker, or subject')
+
+        if episode and not isinstance(episode, Episode):
+            episode = self.episode(id=episode)
+
+        if speaker and not isinstance(speaker, Speaker):
+            speaker = self.speaker(name=speaker)
+
+        c = self.cursor()
+        query = '''
+                select id, episode_id, utterance_number, speaker, text
+                from quote
+                where {}
+                order by {}
+                limit {}
+                '''
+
+        wheres = []
+        params = []
+
+        if episode:
+            wheres.append('episode_id = ?')
+            params.append(episode.id)
+
+        if speaker:
+            wheres.append('speaker = ?')
+            params.append(speaker.id)
+
+        if subject:
+            wheres.append('text like ?')
+            params.append('%{}%'.format(subject))
+
+        if random:
+            order = 'RANDOM()'
+        elif reverse:
+            order = 'episode_id desc, utterance_number desc'
+        else:
+            order = 'episode_id asc, utterance_number asc'
+
+        if not limit:
+            limit = '-1'
+
+        query = query.format(' and '.join(wheres), order, limit)
+        c.execute(query, params)
+
+        return [Quote(*row) for row in c.fetchall()]
+
+    def random(self, speaker=None, subject=None):
+        '''Returns a single quote matching the given search criteria.
+        Shorthand for `search(... limit=1, random=True)[0]`.'''
+
+        quotes = self.search(speaker=speaker, subject=subject,
+                             limit=1, random=True)
+
+        if quotes:
+            return quotes[0]
+        else:
+            return None
