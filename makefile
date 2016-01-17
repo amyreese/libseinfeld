@@ -1,3 +1,5 @@
+seinfeld.db:
+	wget https://noswap.com/pub/seinfeld.db
 
 build:
 	python setup.py build
@@ -11,8 +13,8 @@ upload:
 lint:
 	python -m flake8 --show-source .
 
-test:
+test: seinfeld.db
 	python -m unittest tests
 
 clean:
-	rm -rf build dist README MANIFEST seinfeld.egg-info
+	rm -rf build dist README MANIFEST seinfeld.egg-info seinfeld.db
