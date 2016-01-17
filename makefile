@@ -2,7 +2,7 @@ seinfeld.db:
 	wget https://noswap.com/pub/seinfeld.db
 
 README:
-	cp README.rst
+	cp README.rst README
 
 build:
 	python setup.py build
