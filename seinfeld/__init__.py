@@ -1,4 +1,4 @@
-# Copyright 2016 John Reese
+# Copyright 2022 Amethyst Reese
 # Licensed under the MIT license
 # flake8: noqa
 

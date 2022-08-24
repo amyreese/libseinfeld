@@ -5,8 +5,8 @@ Python library for querying Seinfeld quotes.
 
 Depends on a database generated using `scripts by Colin Pollick`_.
 
-.. image:: https://travis-ci.org/jreese/libseinfeld.svg?branch=master
-    :target: https://travis-ci.org/jreese/libseinfeld
+.. image:: https://travis-ci.org/amyreese/libseinfeld.svg?branch=master
+    :target: https://travis-ci.org/amyreese/libseinfeld
 
 
 Install
@@ -87,7 +87,7 @@ If you'd like context around an individual quote, you can get a passage::
 License
 -------
 
-Copyright 2016 John Reese, and licensed under the MIT license.
+Copyright 2022 Amethyst Reese, and licensed under the MIT license.
 See the ``LICENSE`` file for details.
 
 .. _scripts by Colin Pollick: https://github.com/colinpollock/seinfeld-scripts
